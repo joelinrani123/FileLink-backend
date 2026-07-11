@@ -6,14 +6,11 @@ import com.filelink.security.AuthContext;
 import com.filelink.service.FileShareService;
 import com.filelink.service.FileStorageService;
 import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -32,9 +29,9 @@ public class FileController {
 
     @PostMapping("/upload")
     public FileMetaResponse upload(HttpServletRequest request,
-                                    @RequestParam("file") MultipartFile file,
-                                    @RequestParam(value = "isFolder", defaultValue = "false") boolean isFolder,
-                                    @RequestParam(value = "displayName", required = false) String displayName) {
+                                   @RequestParam("file") MultipartFile file,
+                                   @RequestParam(value = "isFolder", defaultValue = "false") boolean isFolder,
+                                   @RequestParam(value = "displayName", required = false) String displayName) {
         Long userId = AuthContext.requireUserId(request);
         FileEntity entity = fileShareService.upload(userId, file, isFolder, displayName);
         return new FileMetaResponse(entity);
@@ -46,18 +43,13 @@ public class FileController {
     }
 
     @GetMapping("/download/{token}")
-    public ResponseEntity<Resource> download(@PathVariable String token) {
+    public ResponseEntity<Void> download(@PathVariable String token) {
         FileEntity entity = fileShareService.getByToken(token);
-        Resource resource = fileStorageService.loadAsResource(entity.getStoredName());
         fileShareService.incrementDownloadCount(entity);
 
-        String encodedName = java.net.URLEncoder.encode(entity.getOriginalName(), StandardCharsets.UTF_8)
-                .replace("+", "%20");
-
-        return ResponseEntity.ok()
-                .contentType(MediaType.parseMediaType(entity.getContentType()))
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename*=UTF-8''" + encodedName)
-                .body(resource);
+        return ResponseEntity.status(302)
+                .header(HttpHeaders.LOCATION, entity.getFileUrl())
+                .build();
     }
 
     @GetMapping("/my")

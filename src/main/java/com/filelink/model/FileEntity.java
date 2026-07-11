@@ -25,6 +25,10 @@ public class FileEntity {
     @Column(nullable = false)
     private String storedName;
 
+    // Cloudinary secure URL for downloading the file
+    @Column(nullable = false, length = 500)
+    private String fileUrl;
+
     @Column(nullable = false)
     private String contentType;
 

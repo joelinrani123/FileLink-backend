@@ -20,7 +20,7 @@ public class FileShareService {
     private final FileStorageService fileStorageService;
 
     public FileShareService(FileRepository fileRepository, UserRepository userRepository,
-                             FileStorageService fileStorageService) {
+                            FileStorageService fileStorageService) {
         this.fileRepository = fileRepository;
         this.userRepository = userRepository;
         this.fileStorageService = fileStorageService;
@@ -33,11 +33,12 @@ public class FileShareService {
         User uploader = userRepository.findById(userId)
                 .orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "User not found"));
 
-        String storedName = fileStorageService.store(file);
+        FileStorageService.StoredFile stored = fileStorageService.store(file);
 
         FileEntity entity = new FileEntity();
         entity.setOriginalName(displayName != null && !displayName.isBlank() ? displayName : file.getOriginalFilename());
-        entity.setStoredName(storedName);
+        entity.setStoredName(stored.getPublicId());
+        entity.setFileUrl(stored.getUrl());
         entity.setContentType(file.getContentType() == null ? "application/octet-stream" : file.getContentType());
         entity.setSize(file.getSize());
         entity.setFolder(isFolder);
